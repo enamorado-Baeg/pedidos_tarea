@@ -55,6 +55,12 @@
             font-size: 15px;
         }
 
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+
         button {
             padding: 12px;
             width: 100%;
@@ -138,16 +144,19 @@
     <div class="seccion">
         <h2>2. Crear Producto</h2>
 
+        <label for="nombre">Nombre del producto</label>
         <input type="text" id="nombre"
-            placeholder="Nombre del producto">
+            placeholder="Nombre del producto" required>
 
+        <label for="cantidad">Cantidad inicial</label>
         <input type="number" id="cantidad"
-            placeholder="Cantidad">
+            placeholder="Cantidad" min="0" step="1" required>
 
+        <label for="precio">Precio (L.)</label>
         <input type="number" id="precio"
-            placeholder="Precio" step="0.01">
+            placeholder="Precio" min="0.01" step="0.01" required>
 
-        <button onclick="crearProducto()">
+        <button id="registrarProducto" type="button">
             Registrar Producto
         </button>
     </div>
@@ -156,14 +165,16 @@
     <div class="seccion">
         <h2>3. Realizar Pedido</h2>
 
+        <label for="productoPedido">Producto</label>
         <select id="productoPedido">
             <option value="">Seleccione un producto</option>
         </select>
 
+        <label for="cantidadPedido">Cantidad del pedido</label>
         <input type="number" id="cantidadPedido"
-            placeholder="Cantidad del pedido" min="1">
+            placeholder="Cantidad del pedido" min="1" step="1" required>
 
-        <button onclick="realizarPedido()">
+        <button id="enviarPedido" type="button">
             Realizar Pedido
         </button>
     </div>
@@ -173,46 +184,56 @@
 </div>
 
 <script>
+    const elementos = {
+        inventario: document.getElementById("inventario"),
+        nombre: document.getElementById("nombre"),
+        cantidad: document.getElementById("cantidad"),
+        precio: document.getElementById("precio"),
+        productoPedido: document.getElementById("productoPedido"),
+        cantidadPedido: document.getElementById("cantidadPedido"),
+        mensaje: document.getElementById("mensaje"),
+        registrarProducto: document.getElementById("registrarProducto"),
+        enviarPedido: document.getElementById("enviarPedido")
+    };
 
-    // Inventario inicial
     let productos = [
         { nombre: "Arroz", cantidad: 20, precio: 25 },
         { nombre: "Frijoles", cantidad: 15, precio: 30 },
         { nombre: "Azúcar", cantidad: 10, precio: 28 }
     ];
 
-    // Mostrar inventario
-    function verInventario() {
-
-        let tabla = document.getElementById("inventario");
-
-        tabla.innerHTML = "";
-
+    function renderizarInventario() {
+        elementos.inventario.replaceChildren();
         productos.forEach((producto) => {
+            const fila = document.createElement("tr");
+            const valores = [
+                producto.nombre,
+                producto.cantidad,
+                `L. ${producto.precio.toFixed(2)}`
+            ];
 
-            tabla.innerHTML += `
-                <tr>
-                    <td>${producto.nombre}</td>
-                    <td>${producto.cantidad}</td>
-                    <td>L. ${producto.precio.toFixed(2)}</td>
-                </tr>
-            `;
+            valores.forEach((valor) => {
+                const celda = document.createElement("td");
+                celda.textContent = valor;
+                fila.append(celda);
+            });
 
+            elementos.inventario.append(fila);
         });
 
-        actualizarProductos();
+        renderizarOpcionesProducto();
     }
 
-    // Crear producto
     function crearProducto() {
-
-        let nombre = document.getElementById("nombre").value.trim();
-        let cantidad = Number(document.getElementById("cantidad").value);
-        let precio = Number(document.getElementById("precio").value);
+        const nombre = elementos.nombre.value.trim();
+        const cantidadTexto = elementos.cantidad.value;
+        const precioTexto = elementos.precio.value;
+        const cantidad = Number(cantidadTexto);
+        const precio = Number(precioTexto);
 
         if (nombre === "" ||
-            document.getElementById("cantidad").value === "" ||
-            document.getElementById("precio").value === "" ||
+            cantidadTexto === "" ||
+            precioTexto === "" ||
             !Number.isInteger(cantidad) ||
             cantidad < 0 ||
             !Number.isFinite(precio) ||
@@ -222,47 +243,42 @@
             return;
         }
 
-        productos.push({
-            nombre: nombre,
-            cantidad: cantidad,
-            precio: precio
-        });
+        productos.push({ nombre, cantidad, precio });
+        renderizarInventario();
 
-        verInventario();
-
-        document.getElementById("nombre").value = "";
-        document.getElementById("cantidad").value = "";
-        document.getElementById("precio").value = "";
+        elementos.nombre.value = "";
+        elementos.cantidad.value = "";
+        elementos.precio.value = "";
 
         mostrarMensaje("Producto registrado correctamente.", "green");
     }
 
-    // Actualizar lista de productos
-    function actualizarProductos() {
-
-        let select = document.getElementById("productoPedido");
-
-        select.innerHTML = '<option value="">Seleccione un producto</option>';
+    function renderizarOpcionesProducto() {
+        elementos.productoPedido.replaceChildren();
+        const opcionInicial = document.createElement("option");
+        opcionInicial.value = "";
+        opcionInicial.textContent = "Seleccione un producto";
+        elementos.productoPedido.append(opcionInicial);
 
         productos.forEach((producto, index) => {
-
-            select.innerHTML += `
-                <option value="${index}">
-                    ${producto.nombre} (Stock: ${producto.cantidad})
-                </option>
-            `;
-
+            const opcion = document.createElement("option");
+            opcion.value = String(index);
+            opcion.textContent = `${producto.nombre} (Stock: ${producto.cantidad})`;
+            elementos.productoPedido.append(opcion);
         });
     }
 
-    // Realizar pedido
     function realizarPedido() {
+        const indiceTexto = elementos.productoPedido.value;
+        const cantidadTexto = elementos.cantidadPedido.value;
+        const indice = Number(indiceTexto);
+        const cantidad = Number(cantidadTexto);
 
-        let indice = document.getElementById("productoPedido").value;
-        let cantidad = Number(document.getElementById("cantidadPedido").value);
-
-        if (indice === "" ||
-            document.getElementById("cantidadPedido").value === "" ||
+        if (indiceTexto === "" ||
+            cantidadTexto === "" ||
+            !Number.isInteger(indice) ||
+            indice < 0 ||
+            indice >= productos.length ||
             !Number.isInteger(cantidad) ||
             cantidad <= 0) {
 
@@ -270,22 +286,19 @@
             return;
         }
 
-        let producto = productos[indice];
+        const producto = productos[indice];
 
         if (cantidad > producto.cantidad) {
-
             mostrarMensaje("No hay suficiente inventario.", "red");
             return;
         }
 
         producto.cantidad -= cantidad;
+        const total = cantidad * producto.precio;
+        renderizarInventario();
 
-        let total = cantidad * producto.precio;
-
-        verInventario();
-
-        document.getElementById("cantidadPedido").value = "";
-        document.getElementById("productoPedido").value = "";
+        elementos.cantidadPedido.value = "";
+        elementos.productoPedido.value = "";
 
         mostrarMensaje(
             "Pedido realizado. Total: L. " + total.toFixed(2),
@@ -293,18 +306,14 @@
         );
     }
 
-    // Mostrar mensajes
     function mostrarMensaje(texto, color) {
-
-        let mensaje = document.getElementById("mensaje");
-
-        mensaje.textContent = texto;
-        mensaje.style.color = color;
+        elementos.mensaje.textContent = texto;
+        elementos.mensaje.style.color = color;
     }
 
-    // Cargar inventario inicial
-    verInventario();
-
+    elementos.registrarProducto.addEventListener("click", crearProducto);
+    elementos.enviarPedido.addEventListener("click", realizarPedido);
+    renderizarInventario();
 </script>
 
 </body>
