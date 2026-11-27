@@ -1,0 +1,12 @@
+# Dependencias y salidas generadas de JavaScript
+node_modules/
+/dist/
+/build/
+*.log
+
+# Archivos locales y del sistema operativo
+.env*
+!.env.example
+.vscode/
+.DS_Store
+Thumbs.db
