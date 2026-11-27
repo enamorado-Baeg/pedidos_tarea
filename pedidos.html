@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Pedidos</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f1f4f9;
+            padding: 30px;
+        }
+
+        .contenedor {
+            max-width: 850px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: #243b55;
+            margin-bottom: 25px;
+        }
+
+        h2 {
+            color: #243b55;
+            margin-bottom: 15px;
+        }
+
+        .seccion {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        button {
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            background: #243b55;
+        }
+
+        button:hover {
+            opacity: 0.85;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background: #243b55;
+            color: white;
+        }
+
+        #mensaje {
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .contenedor {
+                padding: 15px;
+            }
+
+            th, td {
+                padding: 8px 4px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="contenedor">
+
+    <h1>Sistema de Gestión de Pedidos</h1>
+
+    <!-- 1. VER INVENTARIO -->
+    <div class="seccion">
+        <h2>1. Ver Inventario</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Producto</th>
+                    <th>Cantidad</th>
+                    <th>Precio</th>
+                </tr>
+            </thead>
+
+            <tbody id="inventario">
+            </tbody>
+        </table>
+    </div>
+
+    <!-- 2. CREAR PRODUCTO -->
+    <div class="seccion">
+        <h2>2. Crear Producto</h2>
+
+        <input type="text" id="nombre"
+            placeholder="Nombre del producto">
+
+        <input type="number" id="cantidad"
+            placeholder="Cantidad">
+
+        <input type="number" id="precio"
+            placeholder="Precio" step="0.01">
+
+        <button onclick="crearProducto()">
+            Registrar Producto
+        </button>
+    </div>
+
+    <!-- 3. REALIZAR PEDIDO -->
+    <div class="seccion">
+        <h2>3. Realizar Pedido</h2>
+
+        <select id="productoPedido">
+            <option value="">Seleccione un producto</option>
+        </select>
+
+        <input type="number" id="cantidadPedido"
+            placeholder="Cantidad del pedido" min="1">
+
+        <button onclick="realizarPedido()">
+            Realizar Pedido
+        </button>
+    </div>
+
+    <p id="mensaje"></p>
+
+</div>
+
+<script>
+
+    // Inventario inicial
+    let productos = [
+        { nombre: "Arroz", cantidad: 20, precio: 25 },
+        { nombre: "Frijoles", cantidad: 15, precio: 30 },
+        { nombre: "Azúcar", cantidad: 10, precio: 28 }
+    ];
+
+    // Mostrar inventario
+    function verInventario() {
+
+        let tabla = document.getElementById("inventario");
+
+        tabla.innerHTML = "";
+
+        productos.forEach((producto) => {
+
+            tabla.innerHTML += `
+                <tr>
+                    <td>${producto.nombre}</td>
+                    <td>${producto.cantidad}</td>
+                    <td>L. ${producto.precio.toFixed(2)}</td>
+                </tr>
+            `;
+
+        });
+
+        actualizarProductos();
+    }
+
+    // Crear producto
+    function crearProducto() {
+
+        let nombre = document.getElementById("nombre").value.trim();
+        let cantidad = Number(document.getElementById("cantidad").value);
+        let precio = Number(document.getElementById("precio").value);
+
+        if (nombre === "" ||
+            document.getElementById("cantidad").value === "" ||
+            document.getElementById("precio").value === "" ||
+            !Number.isInteger(cantidad) ||
+            cantidad < 0 ||
+            !Number.isFinite(precio) ||
+            precio <= 0) {
+
+            mostrarMensaje("Ingrese datos válidos.", "red");
+            return;
+        }
+
+        productos.push({
+            nombre: nombre,
+            cantidad: cantidad,
+            precio: precio
+        });
+
+        verInventario();
+
+        document.getElementById("nombre").value = "";
+        document.getElementById("cantidad").value = "";
+        document.getElementById("precio").value = "";
+
+        mostrarMensaje("Producto registrado correctamente.", "green");
+    }
+
+    // Actualizar lista de productos
+    function actualizarProductos() {
+
+        let select = document.getElementById("productoPedido");
+
+        select.innerHTML = '<option value="">Seleccione un producto</option>';
+
+        productos.forEach((producto, index) => {
+
+            select.innerHTML += `
+                <option value="${index}">
+                    ${producto.nombre} (Stock: ${producto.cantidad})
+                </option>
+            `;
+
+        });
+    }
+
+    // Realizar pedido
+    function realizarPedido() {
+
+        let indice = document.getElementById("productoPedido").value;
+        let cantidad = Number(document.getElementById("cantidadPedido").value);
+
+        if (indice === "" ||
+            document.getElementById("cantidadPedido").value === "" ||
+            !Number.isInteger(cantidad) ||
+            cantidad <= 0) {
+
+            mostrarMensaje("Seleccione un producto e ingrese una cantidad válida.", "red");
+            return;
+        }
+
+        let producto = productos[indice];
+
+        if (cantidad > producto.cantidad) {
+
+            mostrarMensaje("No hay suficiente inventario.", "red");
+            return;
+        }
+
+        producto.cantidad -= cantidad;
+
+        let total = cantidad * producto.precio;
+
+        verInventario();
+
+        document.getElementById("cantidadPedido").value = "";
+        document.getElementById("productoPedido").value = "";
+
+        mostrarMensaje(
+            "Pedido realizado. Total: L. " + total.toFixed(2),
+            "green"
+        );
+    }
+
+    // Mostrar mensajes
+    function mostrarMensaje(texto, color) {
+
+        let mensaje = document.getElementById("mensaje");
+
+        mensaje.textContent = texto;
+        mensaje.style.color = color;
+    }
+
+    // Cargar inventario inicial
+    verInventario();
+
+</script>
+
+</body>
+</html>
